@@ -1,0 +1,36 @@
+version: "3.7"
+services:
+  sbr-fbe-service:    
+    image: 172.32.5.240:5050/sbr-fbe-service:currentBuild.number
+    ports:
+      - "8084:8084"
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [node.role == manager]
+      restart_policy:
+        condition: on-failure
+
+    labels:
+      app: new_smart_branch
+      traefik.enable: 'true'
+      traefik.http.services.sbr-fbe-service.loadbalancer.server.port: 8084
+      traefik.docker.network: traefik-proxy
+      traefik.http.routers.sbr-fbe-service.rule: PathPrefix(`/cbs-connector/`) 
+      traefik.http.routers.sbr-fbe-service.entrypoints: http     
+
+    environment:
+      - ACTIVE_PROFILE=dev
+      - PORT=8084
+     
+      
+    networks:
+      - smart-branch-net-overlay
+      - traefik-proxy
+
+networks:
+  smart-branch-net-overlay:
+    external: true
+  traefik-proxy:
+    external: true
