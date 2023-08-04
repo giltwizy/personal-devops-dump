@@ -1,0 +1,56 @@
+pipeline {
+
+    agent any
+
+    environment {
+        NEXUS_URL  = '172.32.5.240:5050'
+        IMAGE_URL_WITH_TAG = "${NEXUS_URL}/lending-api-gateway:${currentBuild.number}"
+    }
+
+    stages {
+
+        stage("sonarqube analysis"){
+        steps{
+         nodejs(nodeJSInstallationName: 'NodeJS16'){
+            sh "npm install"
+             withSonarQubeEnv("SonarQube") {
+                  sh "npm install jest"
+                  sh "npm run test"
+                  sh "npm install sonar-scanner"
+                  sh "npm run sonar"
+                }
+          }
+        }         
+      }
+
+   
+        stage('Building Docker Image') {
+            steps {
+                sh "docker build . -t ${IMAGE_URL_WITH_TAG}"
+            }
+        }
+        stage('Push to In-house Nexus Docker Registry') {
+            steps {
+                withCredentials([string(credentialsId: 'nexus-pwd', variable: 'nexusPwd')]) {
+                    sh 'docker login -u admin -p ${nexusPwd} ${NEXUS_URL}'
+                    sh "docker push ${IMAGE_URL_WITH_TAG}"
+                }
+            }
+        }
+        stage('Send Deployment Artifacts to credit-pro-linux') {
+            steps {
+                sh 'chmod +x changeTag.sh'
+                sh "./changeTag.sh ${currentBuild.number}"
+    
+                sshPublisher(publishers: [sshPublisherDesc(configName: 'credit-pro-linux', transfers: [sshTransfer(cleanRemote: false, excludes: '', execCommand: '', flatten: false, makeEmptyDirs: false, noDefaultExcludes: false, patternSeparator: '[, ]+', remoteDirectory: '/pipelines/lending-api-gateway/', remoteDirectorySDF: false, removePrefix: '', sourceFiles: '*.yml')], usePromotionTimestamp: false, useWorkspaceInPromotion: false, verbose: false)])
+            }
+        }
+  
+        stage('Deploy service in credit-pro-linux') {
+            steps {
+               sshPublisher(publishers: [sshPublisherDesc(configName: 'credit-pro-linux', transfers: [sshTransfer(cleanRemote: false, excludes: '', execCommand: 'docker login -u admin -p Crdb2021 172.32.5.240:5050 && docker stack deploy -c /home/chtemba/pipelines/lending-api-gateway/docker-compose.yml lending-api-gateway --with-registry-auth', flatten: false, makeEmptyDirs: false, noDefaultExcludes: false, patternSeparator: '[, ]+', remoteDirectory: '', remoteDirectorySDF: false, removePrefix: '', sourceFiles: '')], usePromotionTimestamp: false, useWorkspaceInPromotion: false, verbose: false)])
+            }
+        }
+    }
+}
+
