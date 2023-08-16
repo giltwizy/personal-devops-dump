@@ -1,0 +1,24 @@
+version: "3.7"
+
+services:
+  simbanking-portal-congo:
+    image: 172.32.5.240:5050/simbanking-portal-congo:currentBuild.number
+    ports:
+      - "8090:8090"
+    networks:
+      - simbanking-congo
+      
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [node.role == manager]
+      restart_policy:
+        condition: on-failure
+
+    environment:
+      - APPLICATION_PORT=8090
+
+networks:
+  simbanking-congo:
+    external: true

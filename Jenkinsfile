@@ -1,0 +1,58 @@
+pipeline {
+
+    agent any
+    
+    environment {
+        NEXUS_URL  = '172.32.5.240:5050'
+        IMAGE_URL_WITH_TAG = "${NEXUS_URL}/simbanking-portal-congo:${currentBuild.number}"
+    }
+
+    stages {
+        
+        stage("sonarqube analysis"){
+        steps{
+         nodejs(nodeJSInstallationName: 'NodeJS16'){
+            sh "npm install"
+             withSonarQubeEnv("SonarQube") {
+                  sh "npm run test"
+                  sh "npm run sonar"
+            }
+          }
+        }         
+      }
+
+        
+        stage('Building Docker Image') {
+            steps {
+                sh "docker build . -t ${IMAGE_URL_WITH_TAG}"
+            }
+        }
+        stage('Push to In-house Nexus Docker Registry') {
+            steps {
+                withCredentials([string(credentialsId: 'nexus-pwd', variable: 'nexusPwd')]) {
+                    sh 'docker login -u admin -p ${nexusPwd} ${NEXUS_URL}'
+                    sh "docker push ${IMAGE_URL_WITH_TAG}"
+                }
+            }
+        }
+        
+        stage('Sending Deployment Artifacts to congouat') {
+            steps {
+                sh 'chmod +x changeTag.sh'
+                sh "./changeTag.sh ${currentBuild.number}"
+
+                sshPublisher(publishers: [sshPublisherDesc(configName: 'congouat', transfers: [sshTransfer(cleanRemote: false, excludes: '', execCommand: '', flatten: false, makeEmptyDirs: false, noDefaultExcludes: false, patternSeparator: '[, ]+', remoteDirectory: '/pipelines/simbanking-portal-congo/', remoteDirectorySDF: false, removePrefix: '', sourceFiles: '*.yml')], usePromotionTimestamp: false, useWorkspaceInPromotion: false, verbose: false)])                
+            }
+        }
+
+
+
+        stage('Deploy service in congouat') {
+            steps {
+               sshPublisher(publishers: [sshPublisherDesc(configName: 'congouat', transfers: [sshTransfer(cleanRemote: false, excludes: '', execCommand: 'docker login -u admin -p Crdb2021 172.32.5.240:5050 && docker stack deploy -c /home/ussdroot/pipelines/simbanking-portal-congo/docker-compose.yml simbanking-portal-congo --with-registry-auth', flatten: false, makeEmptyDirs: false, noDefaultExcludes: false, patternSeparator: '[, ]+', remoteDirectory: '', remoteDirectorySDF: false, removePrefix: '', sourceFiles: '')], usePromotionTimestamp: false, useWorkspaceInPromotion: false, verbose: false)])
+            }
+        }
+
+    }
+}
+
