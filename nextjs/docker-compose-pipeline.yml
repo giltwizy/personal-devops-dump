@@ -1,12 +1,12 @@
 version: "3.7"
 
 services:
-  simbanking-portal-congo:
-    image: 172.32.5.240:5050/simbanking-portal-congo:currentBuild.number
+  sanitized-service-name:
+    image: 172.32.5.240:5050/sanitized-service-name:currentBuild.number
     ports:
       - "8090:8090"
     networks:
-      - simbanking-congo
+      - sanitized-network-name
       
     deploy:
       mode: replicated
@@ -20,5 +20,5 @@ services:
       - APPLICATION_PORT=8090
 
 networks:
-  simbanking-congo:
+  sanitized-network-name:
     external: true
