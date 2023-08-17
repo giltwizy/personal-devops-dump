@@ -9,9 +9,9 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>tz.co.sanitized</groupId>
-	<artifactId>fbe-service</artifactId>
+	<artifactId>sanitized-service-name</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>fbe-service</name>
+	<name>sanitized-service-name</name>
 	<description>Onboarding service</description>
 	<properties>
 		<java.version>17</java.version>

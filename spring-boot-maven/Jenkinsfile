@@ -8,7 +8,7 @@ pipeline {
 
     environment {
         NEXUS_URL  = '172.32.5.240:5050'
-        IMAGE_URL_WITH_TAG = "${NEXUS_URL}/sbr-fbe-service:${currentBuild.number}"
+        IMAGE_URL_WITH_TAG = "${NEXUS_URL}/sanitized-service-name:${currentBuild.number}"
     }
 
     stages {      
@@ -33,25 +33,25 @@ pipeline {
         stage('Push to Image Registry') {
             steps {
                 withCredentials([string(credentialsId: 'nexus-pwd', variable: 'nexusPwd')]) {
-                    sh "docker login -u admin -p ${nexusPwd} ${NEXUS_URL}"
+                    sh "docker login -u sanitized-username -p ${nexusPwd} ${NEXUS_URL}"
                     sh "docker push ${IMAGE_URL_WITH_TAG}"
                 }
             }
         }
 
 
-        stage('Sending Deployment Artifacts to smartbranch-uat-122') {
+        stage('Sending Deployment Artifacts to sanitized-server-name') {
             steps {
                 sh 'chmod +x changeTag.sh'
                 sh "./changeTag.sh ${currentBuild.number}"
 
-                sshPublisher(publishers: [sshPublisherDesc(configName: 'smartbranch-uat-122', transfers: [sshTransfer(cleanRemote: false, excludes: '', execCommand: '', flatten: false, makeEmptyDirs: false, noDefaultExcludes: false, patternSeparator: '[, ]+', remoteDirectory: '/pipelines/sbr-fbe-service/', remoteDirectorySDF: false, removePrefix: '', sourceFiles: '*.yml')], usePromotionTimestamp: false, useWorkspaceInPromotion: false, verbose: false)])                
+                sshPublisher(publishers: [sshPublisherDesc(configName: 'sanitized-server-name', transfers: [sshTransfer(cleanRemote: false, excludes: '', execCommand: '', flatten: false, makeEmptyDirs: false, noDefaultExcludes: false, patternSeparator: '[, ]+', remoteDirectory: '/pipelines/sanitized-service-name/', remoteDirectorySDF: false, removePrefix: '', sourceFiles: '*.yml')], usePromotionTimestamp: false, useWorkspaceInPromotion: false, verbose: false)])                
             }
         }
 
-        stage('Deployment in smartbranch-uat-122') {
+        stage('Deployment in sanitized-server-name') {
             steps {
-               sshPublisher(publishers: [sshPublisherDesc(configName: 'smartbranch-uat-122', transfers: [sshTransfer(cleanRemote: false, excludes: '', execCommand: 'docker login -u admin -p Crdb2021 172.32.5.240:5050 && docker stack deploy -c /home/smbroot/pipelines/sbr-fbe-service/docker-compose.yml sbr-fbe-service --with-registry-auth', flatten: false, makeEmptyDirs: false, noDefaultExcludes: false, patternSeparator: '[, ]+', remoteDirectory: '', remoteDirectorySDF: false, removePrefix: '', sourceFiles: '')], usePromotionTimestamp: false, useWorkspaceInPromotion: false, verbose: false)])
+               sshPublisher(publishers: [sshPublisherDesc(configName: 'sanitized-server-name', transfers: [sshTransfer(cleanRemote: false, excludes: '', execCommand: 'docker login -u sanitized-username -p sanitized-password 172.32.5.240:5050 && docker stack deploy -c /home/sanitized-username/pipelines/sanitized-service-name/docker-compose.yml sanitized-service-name --with-registry-auth', flatten: false, makeEmptyDirs: false, noDefaultExcludes: false, patternSeparator: '[, ]+', remoteDirectory: '', remoteDirectorySDF: false, removePrefix: '', sourceFiles: '')], usePromotionTimestamp: false, useWorkspaceInPromotion: false, verbose: false)])
             }
         }
 

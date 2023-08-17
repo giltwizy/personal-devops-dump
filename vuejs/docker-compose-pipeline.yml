@@ -1,13 +1,14 @@
-version: "3.5"
+version: "3.7"
 
 services:
   sanitized-service-name:
     image: 172.32.5.240:5050/sanitized-service-name:currentBuild.number
     ports:
-      - "8888:8888"
+      - "8090:8090"
     networks:
-      - sanitized-network-name
-
+      - sanitized-networkname1
+      - sanitized-networkname2
+      
     deploy:
       mode: replicated
       replicas: 1
@@ -17,14 +18,11 @@ services:
         condition: on-failure
 
     environment:
-      - APPLICATION_PORT=8888
+      - PORT=8090
 
-   
 networks:
-  sanitized-network-name:
+  sanitized-networkname1:
     external: true
-
-
-
-
+  sanitized-networkname2:
+    external: true
 

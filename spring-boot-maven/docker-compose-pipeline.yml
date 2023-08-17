@@ -1,7 +1,7 @@
 version: "3.7"
 services:
-  sbr-fbe-service:    
-    image: 172.32.5.240:5050/sbr-fbe-service:currentBuild.number
+  sanitized-service-name:    
+    image: 172.32.5.240:5050/sanitized-service-name:currentBuild.number
     ports:
       - "8084:8084"
     deploy:
@@ -15,10 +15,10 @@ services:
     labels:
       app: new_smart_branch
       traefik.enable: 'true'
-      traefik.http.services.sbr-fbe-service.loadbalancer.server.port: 8084
+      traefik.http.services.sanitized-service-name.loadbalancer.server.port: 8084
       traefik.docker.network: traefik-proxy
-      traefik.http.routers.sbr-fbe-service.rule: PathPrefix(`/cbs-connector/`) 
-      traefik.http.routers.sbr-fbe-service.entrypoints: http     
+      traefik.http.routers.sanitized-service-name.rule: PathPrefix(`/cbs-connector/`) 
+      traefik.http.routers.sanitized-service-name.entrypoints: http     
 
     environment:
       - ACTIVE_PROFILE=dev
